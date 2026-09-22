@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compteur Ultra Pro Interactif</title>
+    <meta name="description" content="Compteur interactif avec historique, graphique, thèmes et sons.">
+    <meta property="og:title" content="Compteur Ultra Pro">
+    <meta property="og:description" content="Compteur interactif avec sons, thèmes et graphique.">
+    <meta name="theme-color" content="#4A00E0">
+
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #74ebe1 0%, #d4a5ec 100%);
@@ -23,6 +28,8 @@
             --panel-bg: #0f172a;
         }
 
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--bg-gradient);
@@ -32,7 +39,6 @@
             align-items: center;
             margin: 0;
             padding: 20px;
-            box-sizing: border-box;
             transition: background 0.3s ease;
         }
 
@@ -43,7 +49,8 @@
             border-radius: 15px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             text-align: center;
-            width: 380px;
+            width: 400px;
+            max-width: 100%;
             transition: background-color 0.3s ease;
         }
 
@@ -77,18 +84,45 @@
             font-size: 1.8rem;
         }
 
+        .niveau {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 5px;
+        }
+
         .counter {
             font-size: 5rem;
             font-weight: bold;
             color: #4A00E0;
             margin: 10px 0;
-            transition: transform 0.1s ease;
+            transition: transform 0.1s ease, color 0.3s ease;
             display: inline-block;
             width: 100%;
+            line-height: 1;
         }
 
-        .pop {
-            transform: scale(1.15);
+        .counter.positif { color: #28a745; }
+        .counter.negatif { color: #dc3545; }
+        .counter.objectif {
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .pop { transform: scale(1.15); }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #4A00E0);
+            width: 0%;
+            transition: width 0.3s ease;
         }
 
         .message {
@@ -96,45 +130,74 @@
             color: #28a745;
             min-height: 24px;
             margin-bottom: 15px;
+            font-size: 0.95rem;
         }
 
         .btn-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
         button.action-btn {
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 1rem;
+            padding: 12px 16px;
+            font-size: 0.95rem;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             transition: transform 0.1s, opacity 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
-        button.action-btn:active {
-            transform: scale(0.95);
+        button.action-btn:active { transform: scale(0.95); }
+        button.action-btn:hover { opacity: 0.9; }
+
+        button.action-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+            pointer-events: none;
         }
 
-        button.action-btn:hover {
-            opacity: 0.9;
+        button.action-btn:active::after {
+            width: 200px;
+            height: 200px;
         }
 
         .btn-add { background-color: #28a745; flex: 1; }
         .btn-sub { background-color: #dc3545; flex: 1; }
+        .btn-add-10 { background-color: #6f42c1; flex: 0.6; padding: 12px 10px; font-size: 0.9rem; }
+        .btn-sub-10 { background-color: #6f42c1; flex: 0.6; padding: 12px 10px; font-size: 0.9rem; }
+
         .btn-reset {
             background-color: #6c757d;
             width: 100%;
             padding: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .btn-export {
             background-color: #0284c7;
+            width: 100%;
+            padding: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .btn-clear {
+            background-color: #b91c1c;
             width: 100%;
             padding: 8px;
             font-size: 0.85rem;
@@ -171,8 +234,16 @@
             transition: height 0.2s ease;
         }
 
+        .stats {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-around;
+            margin-top: 8px;
+        }
+
         .history-section {
-            margin-top: 25px;
+            margin-top: 20px;
             border-top: 1px solid var(--border-color);
             padding-top: 15px;
             text-align: left;
@@ -198,6 +269,13 @@
             padding: 4px 0;
             border-bottom: 1px dashed var(--border-color);
         }
+
+        .hint {
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            margin-top: 12px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -209,29 +287,42 @@
                 <option value="modern">🎵 Sons Modernes</option>
                 <option value="mute">🔇 Mode Muet</option>
             </select>
-            <button class="theme-toggle" id="theme-btn">☀️</button>
+            <button class="theme-toggle" id="theme-btn" title="Basculer le thème (T)">☀️</button>
         </div>
 
         <h1>Mon Compteur Avancé</h1>
+        <div class="niveau" id="niveau">🥚 Débutant</div>
         <div class="counter" id="nombre">0</div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
         <div class="message" id="alerte-message"></div>
 
         <div class="btn-group">
-            <button class="action-btn btn-sub" id="bouton-moins">Soustraire -1</button>
-            <button class="action-btn btn-add" id="bouton-plus">Ajouter +1</button>
+            <button class="action-btn btn-sub-10" id="bouton-moins-10">-10</button>
+            <button class="action-btn btn-sub" id="bouton-moins">-1</button>
+            <button class="action-btn btn-add" id="bouton-plus">+1</button>
+            <button class="action-btn btn-add-10" id="bouton-plus-10">+10</button>
         </div>
-        <button class="action-btn btn-reset" id="bouton-reset">Réinitialiser</button>
+
+        <button class="action-btn btn-reset" id="bouton-reset">Réinitialiser (R)</button>
         <button class="action-btn btn-export" id="bouton-export">📥 Télécharger l'historique (.csv)</button>
+        <button class="action-btn btn-clear" id="bouton-clear">🗑️ Effacer l'historique</button>
 
         <div class="sparkline-container">
             <div class="sparkline-title">Graphique des derniers clics :</div>
             <div class="sparkline" id="graphique"></div>
+            <div class="stats" id="stats"></div>
         </div>
 
         <div class="history-section">
             <h3>Historique des actions :</h3>
             <ul class="history-list" id="liste-historique"></ul>
         </div>
+
+        <div class="hint">💡 Raccourcis : ↑/↓ (+/-1) · R (reset) · T (thème) · Ctrl+Z (annuler)</div>
     </div>
 
     <script>
@@ -240,26 +331,54 @@
         const MAX_GRAPH = 20;
         const MAX_HISTO_AFFICHE = 4;
 
+        const NIVEAUX = [
+            { seuil: 0,   nom: '🥚 Débutant' },
+            { seuil: 5,   nom: '🐣 Novice' },
+            { seuil: 10,  nom: '🐤 Apprenti' },
+            { seuil: 25,  nom: '🦅 Expert' },
+            { seuil: 50,  nom: '🔥 Maître' },
+            { seuil: 100, nom: '👑 Légende' }
+        ];
+
         // ====== RÉFÉRENCES DOM ======
         const nombre = document.getElementById('nombre');
         const btnPlus = document.getElementById('bouton-plus');
         const btnMoins = document.getElementById('bouton-moins');
+        const btnPlus10 = document.getElementById('bouton-plus-10');
+        const btnMoins10 = document.getElementById('bouton-moins-10');
         const btnReset = document.getElementById('bouton-reset');
         const btnExport = document.getElementById('bouton-export');
+        const btnClear = document.getElementById('bouton-clear');
         const fiche = document.getElementById('fiche');
         const alerteMessage = document.getElementById('alerte-message');
         const listeHistorique = document.getElementById('liste-historique');
         const themeBtn = document.getElementById('theme-btn');
         const soundPack = document.getElementById('sound-pack');
         const graphique = document.getElementById('graphique');
+        const niveauEl = document.getElementById('niveau');
+        const progressEl = document.getElementById('progress');
+        const statsEl = document.getElementById('stats');
 
-        // ====== ÉTAT (chargé depuis localStorage) ======
+        // ====== ÉTAT ======
         let compteur = parseInt(localStorage.getItem('monCompteur')) || 0;
-        let themeActuel = localStorage.getItem('theme') || 'light';
         let historiqueData = JSON.parse(localStorage.getItem('historiqueDonnees') || '[]');
         let historiqueGraphique = JSON.parse(localStorage.getItem('historiqueGraph') || '[]');
 
-        // ====== AUDIO (un seul contexte réutilisé) ======
+        // Thème : choix utilisateur OU auto selon l'heure
+        let themeActuel = localStorage.getItem('theme');
+        if (!themeActuel) {
+            const heure = new Date().getHours();
+            themeActuel = (heure >= 20 || heure < 7) ? 'dark' : 'light';
+        }
+
+        // Undo
+        let dernierEtat = null;
+
+        // Anti-spam audio
+        let dernierSon = 0;
+        let objectifAtteintAvant = compteur >= OBJECTIF;
+
+        // ====== AUDIO ======
         let audioCtx = null;
         function getAudioCtx() {
             if (!audioCtx) {
@@ -276,6 +395,10 @@
         function jouerSon(typeAction) {
             const pack = soundPack.value;
             if (pack === 'mute') return;
+
+            const now = Date.now();
+            if (now - dernierSon < 50) return;
+            dernierSon = now;
 
             try {
                 const ctx = getAudioCtx();
@@ -313,9 +436,13 @@
 
         function animerChiffre() {
             nombre.classList.remove('pop');
-            void nombre.offsetWidth; // force le reflow
+            void nombre.offsetWidth;
             nombre.classList.add('pop');
             setTimeout(() => nombre.classList.remove('pop'), 100);
+        }
+
+        function getNiveau() {
+            return [...NIVEAUX].reverse().find(n => compteur >= n.seuil) || NIVEAUX[0];
         }
 
         function dessinerGraphique() {
@@ -338,12 +465,20 @@
             });
         }
 
+        function mettreAJourStats() {
+            const plus = historiqueData.filter(h => h.action.includes('Ajout') || h.action.includes('+')).length;
+            const moins = historiqueData.filter(h => h.action.includes('Soustraction') || h.action.includes('-')).length;
+            statsEl.innerHTML = `
+                <span>➕ ${plus}</span>
+                <span>➖ ${moins}</span>
+                <span>📝 ${historiqueData.length}</span>
+            `;
+        }
+
         function ajouterEvenement(texte) {
             const maintenant = new Date();
             const heure = maintenant.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
 
             historiqueData.push({ heure, action: texte, total: compteur });
@@ -358,11 +493,54 @@
             }
         }
 
+        function lancerConfettis() {
+            for (let i = 0; i < 30; i++) {
+                const conf = document.createElement('div');
+                conf.textContent = ['🎉', '✨', '⭐', '🎊'][Math.floor(Math.random() * 4)];
+                conf.style.cssText = `
+                    position: fixed;
+                    left: ${Math.random() * 100}%;
+                    top: -20px;
+                    font-size: ${16 + Math.random() * 16}px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    transition: transform 2s ease-in, opacity 2s;
+                `;
+                document.body.appendChild(conf);
+                requestAnimationFrame(() => {
+                    conf.style.transform = `translateY(${window.innerHeight + 50}px) rotate(${Math.random() * 720}deg)`;
+                    conf.style.opacity = '0';
+                });
+                setTimeout(() => conf.remove(), 2000);
+            }
+        }
+
+        function sauvegarderEtat() {
+            dernierEtat = {
+                compteur,
+                historiqueData: JSON.parse(JSON.stringify(historiqueData)),
+                historiqueGraphique: [...historiqueGraphique]
+            };
+        }
+
         function rafraichirApplication(actionTexte) {
             nombre.textContent = compteur;
             localStorage.setItem('monCompteur', compteur);
 
-            // Couleur de fond conditionnelle (uniquement en thème clair)
+            // Couleur du compteur
+            nombre.classList.remove('positif', 'negatif', 'objectif');
+            if (compteur >= OBJECTIF) nombre.classList.add('objectif');
+            else if (compteur > 0) nombre.classList.add('positif');
+            else if (compteur < 0) nombre.classList.add('negatif');
+
+            // Niveau
+            niveauEl.textContent = getNiveau().nom;
+
+            // Barre de progression
+            const pourcentage = Math.min(Math.max((compteur / OBJECTIF) * 100, 0), 100);
+            progressEl.style.width = pourcentage + '%';
+
+            // Fond de la carte
             if (document.documentElement.getAttribute('data-theme') !== 'dark') {
                 if (compteur > 0) fiche.style.backgroundColor = "#eafaf1";
                 else if (compteur < 0) fiche.style.backgroundColor = "#fdf2f2";
@@ -374,11 +552,16 @@
             // Message d'objectif
             if (compteur >= OBJECTIF) {
                 alerteMessage.textContent = '🏆 Objectif de ' + OBJECTIF + ' atteint !';
+                if (!objectifAtteintAvant) {
+                    lancerConfettis();
+                    objectifAtteintAvant = true;
+                }
             } else {
                 alerteMessage.textContent = '';
+                objectifAtteintAvant = false;
             }
 
-            // Historique + graphique (seulement quand une action utilisateur a lieu)
+            // Historique + graphique
             if (actionTexte) {
                 ajouterEvenement(actionTexte);
                 historiqueGraphique.push(compteur);
@@ -387,10 +570,12 @@
             }
 
             dessinerGraphique();
+            mettreAJourStats();
         }
 
-        // ====== ÉVÉNEMENTS ======
+        // ====== ÉVÉNEMENTS BOUTONS ======
         btnPlus.addEventListener('click', () => {
+            sauvegarderEtat();
             compteur++;
             jouerSon('plus');
             animerChiffre();
@@ -398,13 +583,32 @@
         });
 
         btnMoins.addEventListener('click', () => {
+            sauvegarderEtat();
             compteur--;
             jouerSon('moins');
             animerChiffre();
             rafraichirApplication('Soustraction de -1');
         });
 
+        btnPlus10.addEventListener('click', () => {
+            sauvegarderEtat();
+            compteur += 10;
+            jouerSon('plus');
+            animerChiffre();
+            rafraichirApplication('Ajout de +10');
+        });
+
+        btnMoins10.addEventListener('click', () => {
+            sauvegarderEtat();
+            compteur -= 10;
+            jouerSon('moins');
+            animerChiffre();
+            rafraichirApplication('Soustraction de -10');
+        });
+
         btnReset.addEventListener('click', () => {
+            if (compteur !== 0 && !confirm('Réinitialiser le compteur à 0 ?')) return;
+            sauvegarderEtat();
             compteur = 0;
             jouerSon('reset');
             animerChiffre();
@@ -417,7 +621,6 @@
                 return;
             }
 
-            // BOM UTF-8 pour que les accents s'affichent correctement dans Excel
             let csv = "\uFEFFHeure,Action,Valeur Compteur\n";
             historiqueData.forEach(row => {
                 csv += row.heure + ',' + row.action + ',' + row.total + '\n';
@@ -434,12 +637,62 @@
             URL.revokeObjectURL(url);
         });
 
+        btnClear.addEventListener('click', () => {
+            if (!confirm('Effacer tout l\'historique ?')) return;
+            sauvegarderEtat();
+            historiqueData = [];
+            historiqueGraphique = [];
+            listeHistorique.innerHTML = '';
+            localStorage.removeItem('historiqueDonnees');
+            localStorage.removeItem('historiqueGraph');
+            dessinerGraphique();
+            mettreAJourStats();
+        });
+
         themeBtn.addEventListener('click', () => {
             const nouveau = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', nouveau);
             localStorage.setItem('theme', nouveau);
             themeBtn.textContent = nouveau === 'dark' ? '🌙' : '☀️';
             rafraichirApplication(null);
+        });
+
+        // ====== RACCOURCIS CLAVIER ======
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                if (dernierEtat) {
+                    compteur = dernierEtat.compteur;
+                    historiqueData = dernierEtat.historiqueData;
+                    historiqueGraphique = dernierEtat.historiqueGraphique;
+                    localStorage.setItem('monCompteur', compteur);
+                    localStorage.setItem('historiqueDonnees', JSON.stringify(historiqueData));
+                    localStorage.setItem('historiqueGraph', JSON.stringify(historiqueGraphique));
+                    listeHistorique.innerHTML = '';
+                    const derniers = historiqueData.slice(-MAX_HISTO_AFFICHE).reverse();
+                    derniers.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = '[' + item.heure + '] ' + item.action;
+                        listeHistorique.appendChild(li);
+                    });
+                    rafraichirApplication(null);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp' || e.key === '+') {
+                e.preventDefault();
+                btnPlus.click();
+            } else if (e.key === 'ArrowDown' || e.key === '-') {
+                e.preventDefault();
+                btnMoins.click();
+            } else if (e.key.toLowerCase() === 'r') {
+                btnReset.click();
+            } else if (e.key.toLowerCase() === 't') {
+                themeBtn.click();
+            }
         });
 
         // ====== CHARGEMENT DE L'HISTORIQUE AU DÉMARRAGE ======
