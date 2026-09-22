@@ -44,290 +44,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             text-align: center;
             width: 380px;
-            transition: background-color 0.3s ease, transform 0.2s;
-        }
-        
-        /* Barre d'outils supérieure */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .sound-select {
-            background: var(--panel-bg);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 5px;
-            border-radius: 5px;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .theme-toggle {
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-        
-        h1 { color: var(--text-main); margin: 10px 0; font-size: 1.8rem; }
-        p { color: var(--text-sub); margin: 5px 0; }
-        
-        .counter { 
-            font-size: 5rem; 
-            font-weight: bold; 
-            color: #4A00E0; 
-            margin: 10px 0; 
-            transition: transform 0.1s ease;
-            display: inline-block;
-            width: 100%;
-        }
-        
-        .pop { transform: scale(1.15); }
-        
-        .message {
-            font-weight: bold;
-            color: #28a745;
-            min-height: 24px;
-            margin-bottom: 15px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-        
-        button.action-btn {
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        button.action-btn:active { transform: scale(0.95); }
-        button.action-btn:hover { opacity: 0.9; }
-
-        .btn-add { background-color: #28a745; flex: 1; }
-        .btn-sub { background-color: #dc3545; flex: 1; }
-        .btn-reset { background-color: #6c757d; width: 100%; padding: 10px; margin-bottom: 10px; }
-        
-        .btn-export {
-            background-color: #0284c7;
-            width: 100%;
-            padding: 8px;
-            font-size: 0.85rem;
-        }
-
-        /* Graphique de tendance */
-        .sparkline-container {
-            margin-top: 15px;
-            background: var(--panel-bg);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        .sparkline-title {
-            font-size: 0.8rem;
-            color: var(--text-sub);
-            text-align: left;
-            margin-bottom: 5px;
-        }
-        .sparkline {
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-start;
-            gap: 3px;
-            height: 40px;
-            overflow: hidden;
-        }
-        .bar {
-            width: 12px;
-            background-color: #4A00E0;
-            border-radius: 2px 2px 0 0;
-            transition: height 0.2s ease;
-        }
-
-        /* Section Historique */
-        .history-section {
-            margin-top: 25px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 15px;
-            text-align: left;
-        }
-        .history-section h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-sub); }
-        .history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 90px;
-            overflow-y: auto;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-        }
-        .history-list li {
-            padding: 4px 0;
-            border-bottom: 1px dashed var(--border-color);
-        }
-    </style>
-</head>
-<body>
-
-    <div class="card" id="fiche">
-        <div class="top-bar">
-            <!-- Sélecteur de bruits -->
-            <select class="sound-select" id="sound-pack">
-                <option value="retro">👾 Sons Rétro</option>
-                <option value="modern">🎵 Sons Modernes</option>
-                <option value="mute">🔇 Mode Muet</option>
-            </select>
-            <!-- Bouton thème -->
-            <button class="theme-toggle" id="theme-btn">☀️</button>
-        </div>
-
-        <h1>Mon Compteur Avancé</h1>
-        <div class="counter" id="nombre">0</div>
-        <div class="message" id="alerte-message"></div>
-        
-        <div class="btn-group">
-            <button class="action-btn btn-sub" id="bouton-moins">Soustraire -1</button>
-            <button class="action-btn btn-add" id="bouton-plus">Ajouter +1</button>
-        </div>
-        <button class="action-btn btn-reset" id="bouton-reset">Réinitialiser</button>
-        <button class="action-btn btn-export" id="bouton-export">📥 Télécharger l'historique (.csv)</button>
-
-        <!-- Mini Graphique -->
-        <div class="sparkline-container">
-            <div class="sparkline-title">Graphique des derniers clics :</div>
-            <div class="sparkline" id="graphique"></div>
-        </div>
-
-        <div class="history-section">
-            <h3>Historique des actions :</h3>
-            <ul class="history-list" id="liste-historique"></ul>
-        </div>
-    </div>
-
-    <script>
-        const nombre = document.getElementById('nombre');
-        const btnPlus = document.getElementById('bouton-plus');
-        const btnMoins = document.getElementById('bouton-moins');
-        const btnReset = document.getElementById('bouton-reset');
-        const btnExport = document.getElementById('bouton-export');
-        const fiche = document.getElementById('fiche');
-        const alerteMessage = document.getElementById('alerte-message');
-        const listeHistorique = document.getElementById('liste-historique');
-        const themeBtn = document.getElementById('theme-btn');
-        const soundPack = document.getElementById('sound-pack');
-        const graphique = document.getElementById('graphique');
-
-        const OBJECTIF = 10;
-        
-        // Données persistantes
-        let compteur = localStorage.getItem('monCompteur') ? parseInt(localStorage.getItem('monCompteur')) : 0;
-        let themeActuel = localStorage.getItem('theme') ? localStorage.getItem('theme') : 'light';
-        let historiqueData = localStorage.getItem('historiqueDonnees') ? JSON.parse(localStorage.getItem('historiqueDonnees')) : [];
-        let historiqueGraphique = localStorage.getItem('historiqueGraph') ? JSON.parse(localStorage.getItem('historiqueGraph')) :;
-
-        document.documentElement.setAttribute('data-theme', themeActuel);
-        themeBtn.textContent = themeActuel === 'dark' ? '🌙' : '☀️';
-
-        // 🔊 Synthétiseur Audio Avancé
-        function jouerSon(typeAction) {
-            const pack = soundPack.value;
-            if (pack === 'mute') return;
-
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            
-            if (pack === 'retro') {
-                osc.type = 'square';
-                if (typeAction === 'plus') osc.frequency.setValueAtTime(400, ctx.currentTime), osc.frequency.setValueAtTime(800, ctx.currentTime + 0.05);
-                else if (typeAction === 'moins') osc.frequency.setValueAtTime(300, ctx.currentTime), osc.frequency.setValueAtTime(150, ctx.currentTime + 0.05);
-                else osc.frequency.setValueAtTime(200, ctx.currentTime);
-            } else {
-                osc.type = 'sine';
-                if (typeAction === 'plus') osc.frequency.value = 523.25; // Note Do
-                else if (typeAction === 'moins') osc.frequency.value = 392.00; // Note Sol
-                else osc.frequency.value = 261.63;
-            }
-            
-            gain.gain.setValueAtTime(0.08, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.12);
-        }
-
-        function animerChiffre() {
-            nombre.classList.remove('pop');
-            void nombre.offsetWidth;
-            nombre.classList.add('pop');
-            setTimeout(() => nombre.classList.remove('pop'), 100);
-        }
-
-        // Mettre à jour le graphique visuel
-        function dessinerGraphique() {
-            graphique.innerHTML = '';
-            // Garder seulement les 20 derniers points de données pour le graphique
-            Voici le code complet et nettoyé, prêt à être copié et collé. Il intègre toutes les options avancées (sélecteur de sons, mode sombre, graphique visuel et export de données CSV).
-## 📋 Le Code Complet (index.html)
-
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compteur Ultra Pro Interactif</title>
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #74ebe1 0%, #d4a5ec 100%);
-            --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-sub: #555555;
-            --border-color: #eeeeee;
-            --panel-bg: #f8f9fa;
-        }
-
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-sub: #cbd5e1;
-            --border-color: #334155;
-            --panel-bg: #0f172a;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: background 0.3s ease;
-        }
-
-        .card {
-            position: relative;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            text-align: center;
-            width: 380px;
-            transition: background-color 0.3s ease, transform 0.2s;
+            transition: background-color 0.3s ease;
         }
         
         .top-bar {
@@ -355,7 +72,6 @@
         }
         
         h1 { color: var(--text-main); margin: 10px 0; font-size: 1.8rem; }
-        p { color: var(--text-sub); margin: 5px 0; }
         
         .counter { 
             font-size: 5rem; 
@@ -518,34 +234,38 @@
             const pack = soundPack.value;
             if (pack === 'mute') return;
 
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            
-            if (pack === 'retro') {
-                osc.type = 'square';
-                if (typeAction === 'plus') {
-                    osc.frequency.setValueAtTime(400, ctx.currentTime);
-                    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.05);
-                } else if (typeAction === 'moins') {
-                    osc.frequency.setValueAtTime(300, ctx.currentTime);
-                    osc.frequency.setValueAtTime(150, ctx.currentTime + 0.05);
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                if (pack === 'retro') {
+                    osc.type = 'square';
+                    if (typeAction === 'plus') {
+                        osc.frequency.setValueAtTime(400, ctx.currentTime);
+                        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.05);
+                    } else if (typeAction === 'moins') {
+                        osc.frequency.setValueAtTime(300, ctx.currentTime);
+                        osc.frequency.setValueAtTime(150, ctx.currentTime + 0.05);
+                    } else {
+                        osc.frequency.setValueAtTime(200, ctx.currentTime);
+                    }
                 } else {
-                    osc.frequency.setValueAtTime(200, ctx.currentTime);
+                    osc.type = 'sine';
+                    if (typeAction === 'plus') osc.frequency.value = 523.25;
+                    else if (typeAction === 'moins') osc.frequency.value = 392.00;
+                    else osc.frequency.value = 261.63;
                 }
-            } else {
-                osc.type = 'sine';
-                if (typeAction === 'plus') osc.frequency.value = 523.25;
-                else if (typeAction === 'moins') osc.frequency.value = 392.00;
-                else osc.frequency.value = 261.63;
+                
+                gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch (e) {
+                console.log("Audio non supporté ou bloqué");
             }
-            
-            gain.gain.setValueAtTime(0.08, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.12);
         }
 
         function animerChiffre() {
@@ -559,118 +279,3 @@
             graphique.innerHTML = '';
             if (historiqueGraphique.length > 20) historiqueGraphique.shift();
             
-            const maxVal = Math.max(...historiqueGraphique.map(Math.abs), 1);
-            
-            historiqueGraphique.forEach(val => {
-
-const bar = document.createElement('div');
-bar.className = 'bar';
-const hauteur = Math.max((Math.abs(val) / maxVal) * 35, 3);
-bar.style.height = ${hauteur}px;
-if (val < 0) bar.style.backgroundColor = '#dc3545';
-else if (val > 0) bar.style.backgroundColor = '#28a745';
-bar.title = Valeur : ${val};
-graphique.appendChild(bar);
-});
-}
-function ajouterEvenement(texte) {
-const maintenant = new Date();
-const heure = maintenant.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-historiqueData.push({ heure: heure, action: texte, total: compteur });
-localStorage.setItem('historiqueDonnees', JSON.stringify(historiqueData));
-const li = document.createElement('li');
-li.textContent = [${heure}] ${texte};
-listeHistorique.insertBefore(li, listeHistorique.firstChild);
-if (listeHistorique.children.length > 4) {
-listeHistorique.removeChild(listeHistorique.lastChild);
-}
-}
-function rafraichirApplication(actionTexte) {
-nombre.textContent = compteur;
-localStorage.setItem('monCompteur', compteur);
-if (document.documentElement.getAttribute('data-theme') !== 'dark') {
-if (compteur > 0) fiche.style.backgroundColor = "#eafaf1";
-else if (compteur < 0) fiche.style.backgroundColor = "#fdf2f2";
-else fiche.style.backgroundColor = "#ffffff";
-} else {
-fiche.style.backgroundColor = "var(--card-bg)";
-}
-if (compteur >= OBJECTIF) alerteMessage.textContent = 🏆 Objectif de ${OBJECTIF} atteint !;
-else alerteMessage.textContent = "";
-if (actionTexte) {
-ajouterEvenement(actionTexte);
-historiqueGraphique.push(compteur);
-localStorage.setItem('historiqueGraph', JSON.stringify(historiqueGraphique));
-}
-dessinerGraphique();
-}
-btnPlus.addEventListener('click', () => {
-compteur++;
-jouerSon('plus');
-animerChiffre();
-rafraichirApplication("Ajout de +1");
-});
-btnMoins.addEventListener('click', () => {
-compteur--;
-jouerSon('moins');
-animerChiffre();
-rafraichirApplication("Soustraction de -1");
-});
-btnReset.addEventListener('click', () => {
-compteur = 0;
-jouerSon('reset');
-animerChiffre();
-rafraichirApplication("Remise à zéro");
-});
-btnExport.addEventListener('click', () => {
-if (historiqueData.length === 0) {
-alert("L'historique est vide pour le moment.");
-return;
-}
-let csvContent = "data:text/csv;charset=utf-8,Heure,Action,Valeur Compteur\n";
-historiqueData.forEach(row => {
-csvContent += ${row.heure},${row.action},${row.total}\n;
-});
-const encodedUri = encodeURI(csvContent);
-const link = document.createElement("a");
-link.setAttribute("href", encodedUri);
-link.setAttribute("download", "historique_compteur.csv");
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-});
-themeBtn.addEventListener('click', () => {
-let alternerTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-document.documentElement.setAttribute('data-theme', alternerTheme);
-localStorage.setItem('theme', alternerTheme);
-themeBtn.textContent = alternerTheme === 'dark' ? '🌙' : '☀️';
-rafraichirApplication(null);
-});
-if(historiqueData.length > 0) {
-const derniersAffiches = historiqueData.slice(-4).reverse();
-derniersAffiches.forEach(item => {
-const li = document.createElement('li');
-li.textContent = [${item.heure}] ${item.action};
-listeHistorique.appendChild(li);
-});
-} else {
-ajouterEvenement("Ouverture de l'application");
-}
-rafraichirApplication(null);
-
-
-
-### 📋 Rappel pour l'intégration propre :
-1. Pensez bien à vérifier que votre navigateur n'applique **aucune traduction automatique** sur cette fenêtre avant de copier.
-2. Allez sur **GitHub**, supprimez l'ancien fichier `index.html` vide ou problématique.
-3. Importez ce nouveau fichier propre en cliquant sur **Add file** > **Upload files**.
-4. Validez avec le bouton vert **Commit changes**.
-
-<FollowUp>
-Une fois le déploiement automatique de Netlify terminé, dites-moi :
-* Si le **mode sombre** s'affiche correctement sur votre écran ?
-* Si les **bruitages sonores** fonctionnent bien lors de vos clics ?
-</FollowUp>
-
-
-
