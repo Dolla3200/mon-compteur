@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compteur Premium Interactif</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74ebe1 0%, #d4a5ec 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 350px;
+            transition: background-color 0.4s ease;
+        }
+        h1 { color: #333; margin-top: 0; font-size: 1.8rem; }
+        
+        /* Styles du compteur */
+        .counter { font-size: 5rem; font-weight: bold; color: #4A00E0; margin: 10px 0; }
+        
+        /* Message d'objectif */
+        .message {
+            font-weight: bold;
+            color: #28a745;
+            min-height: 24px;
+            margin-bottom: 15px;
+        }
+
+        /* Groupes de boutons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        button {
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        button:hover { opacity: 0.9; }
+
+        .btn-add { background-color: #28a745; flex: 1; }
+        .btn-sub { background-color: #dc3545; flex: 1; }
+        .btn-reset { background-color: #6c757d; width: 100%; padding: 10px; }
+
+        /* Section Historique */
+        .history-section {
+            margin-top: 25px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            text-align: left;
+        }
+        .history-section h3 { margin: 0 0 10px 0; font-size: 1rem; color: #666; }
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        .history-list li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="fiche">
+        <h1>Mon Compteur Avancé</h1>
+        <div class="counter" id="nombre">0</div>
+        <div class="message" id="alerte-message"></div>
+        
+        <div class="btn-group">
+            <button class="btn-sub" id="bouton-moins">Soustraire -1</button>
+            <button class="btn-add" id="bouton-plus">Ajouter +1</button>
+        </div>
+        <button class="btn-reset" id="bouton-reset">Réinitialiser</button>
+
+        <div class="history-section">
+            <h3>Historique des actions :</h3>
+            <ul class="history-list" id="liste-historique"></ul>
+        </div>
+    </div>
+
+    <script>
+        const nombre = document.getElementById('nombre');
+        const btnPlus = document.getElementById('bouton-plus');
+        const btnMoins = document.getElementById('bouton-moins');
+        const btnReset = document.getElementById('bouton-reset');
+        const fiche = document.getElementById('fiche');
+        const alerteMessage = document.getElementById('alerte-message');
+        const listeHistorique = document.getElementById('liste-historique');
+
+        // Objectif à atteindre
+        const OBJECTIF = 100;
+
+        // Charger la valeur sauvegardée
+        let compteur = localStorage.getItem('monCompteur') ? parseInt(localStorage.getItem('monCompteur')) : 0;
+
+        // Fonction pour ajouter un élément à l'historique visuel
+        function ajouterHistorique(texte) {
+            const li = document.createElement('li');
+            const maintenant = new Date();
+            const heure = maintenant.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            li.textContent = `[${heure}] ${texte}`;
+            listeHistorique.insertBefore(li, listeHistorique.firstChild);
+            
+            // Limiter à 4 éléments visibles dans l'historique pour garder le design propre
+            if (listeHistorique.children.length > 4) {
+                listeHistorique.removeChild(listeHistorique.lastChild);
+            }
+        }
+
+        // Fonction globale de mise à jour de l'interface
+        function rafraichirApplication(actionTexte) {
+            // 1. Mettre à jour le texte du compteur et stocker
+            nombre.textContent = compteur;
+            localStorage.setItem('monCompteur', compteur);
+
+            // 2. Gestion dynamique de la couleur de fond
+            if (compteur > 0) {
+                fiche.style.backgroundColor = "#eafaf1"; // Vert très clair
+            } else if (compteur < 0) {
+                fiche.style.backgroundColor = "#fdf2f2"; // Rouge très clair
+            } else {
+                fiche.style.backgroundColor = "#ffffff"; // Blanc
+            }
+
+            // 3. Vérification de l'objectif
+            if (compteur >= OBJECTIF) {
+                alerteMessage.textContent = `🏆 Objectif de ${OBJECTIF} atteint !`;
+            } else {
+                alerteMessage.textContent = "";
+            }
+
+            // 4. Ajouter à l'historique si une action a été passée
+            if (actionTexte) {
+                ajouterHistorique(actionTexte);
+            }
+        }
+
+        // Actions au clic
+        btnPlus.addEventListener('click', () => {
+            compteur++;
+            rafraichirApplication("Ajout de +1");
+        });
+
+        btnMoins.addEventListener('click', () => {
+            compteur--;
+            rafraichirApplication("Soustraction de -1");
+        });
+
+        btnReset.addEventListener('click', () => {
+            compteur = 0;
+            rafraichirApplication("Remise à zéro");
+        });
+
+        // Premier démarrage de l'affichage
+        rafraichirApplication("Ouverture de l'application");
+    </script>
+</body>
+</html>
