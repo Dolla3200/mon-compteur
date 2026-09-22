@@ -5,9 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compteur Premium Interactif</title>
     <style>
+        /* Variables de couleurs pour le Mode Clair/Sombre */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #74ebe1 0%, #d4a5ec 100%);
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-sub: #555555;
+            --border-color: #eeeeee;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #cbd5e1;
+            --border-color: #334155;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #74ebe1 0%, #d4a5ec 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -15,20 +32,50 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            transition: background 0.3s ease;
         }
+
+        /* Bouton Theme en haut de la carte */
+        .theme-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
         .card {
-            background: white;
+            position: relative;
+            background: var(--card-bg);
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             text-align: center;
             width: 350px;
-            transition: background-color 0.4s ease;
+            transition: background-color 0.3s ease, transform 0.2s;
         }
-        h1 { color: #333; margin-top: 0; font-size: 1.8rem; }
         
-        /* Styles du compteur */
-        .counter { font-size: 5rem; font-weight: bold; color: #4A00E0; margin: 10px 0; }
+        h1 { color: var(--text-main); margin-top: 10px; font-size: 1.8rem; }
+        p { color: var(--text-sub); }
+        
+        /* Styles et animation du compteur */
+        .counter { 
+            font-size: 5rem; 
+            font-weight: bold; 
+            color: #4A00E0; 
+            margin: 10px 0; 
+            transition: transform 0.1s ease;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        /* Classe d'animation temporaire au clic */
+        .pop {
+            transform: scale(1.2);
+        }
         
         /* Message d'objectif */
         .message {
@@ -45,7 +92,8 @@
             justify-content: center;
             margin-bottom: 15px;
         }
-        button {
+        
+        button.action-btn {
             color: white;
             border: none;
             padding: 12px 20px;
@@ -55,8 +103,8 @@
             font-weight: bold;
             transition: transform 0.1s, opacity 0.2s;
         }
-        button:active { transform: scale(0.95); }
-        button:hover { opacity: 0.9; }
+        button.action-btn:active { transform: scale(0.95); }
+        button.action-btn:hover { opacity: 0.9; }
 
         .btn-add { background-color: #28a745; flex: 1; }
         .btn-sub { background-color: #dc3545; flex: 1; }
@@ -65,11 +113,11 @@
         /* Section Historique */
         .history-section {
             margin-top: 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             padding-top: 15px;
             text-align: left;
         }
-        .history-section h3 { margin: 0 0 10px 0; font-size: 1rem; color: #666; }
+        .history-section h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-sub); }
         .history-list {
             list-style: none;
             padding: 0;
@@ -77,26 +125,29 @@
             max-height: 100px;
             overflow-y: auto;
             font-size: 0.85rem;
-            color: #555;
+            color: var(--text-sub);
         }
         .history-list li {
             padding: 4px 0;
-            border-bottom: 1px dashed #f0f0f0;
+            border-bottom: 1px dashed var(--border-color);
         }
     </style>
 </head>
 <body>
 
     <div class="card" id="fiche">
+        <!-- Bouton de changement de thème -->
+        <button class="theme-toggle" id="theme-btn" title="Changer le thème">☀️</button>
+
         <h1>Mon Compteur Avancé</h1>
         <div class="counter" id="nombre">0</div>
         <div class="message" id="alerte-message"></div>
         
         <div class="btn-group">
-            <button class="btn-sub" id="bouton-moins">Soustraire -1</button>
-            <button class="btn-add" id="bouton-plus">Ajouter +1</button>
+            <button class="action-btn btn-sub" id="bouton-moins">Soustraire -1</button>
+            <button class="action-btn btn-add" id="bouton-plus">Ajouter +1</button>
         </div>
-        <button class="btn-reset" id="bouton-reset">Réinitialiser</button>
+        <button class="action-btn btn-reset" id="bouton-reset">Réinitialiser</button>
 
         <div class="history-section">
             <h3>Historique des actions :</h3>
@@ -112,14 +163,45 @@
         const fiche = document.getElementById('fiche');
         const alerteMessage = document.getElementById('alerte-message');
         const listeHistorique = document.getElementById('liste-historique');
+        const themeBtn = document.getElementById('theme-btn');
 
-        // Objectif à atteindre
-        const OBJECTIF = 100;
+        const OBJECTIF = 10;
 
-        // Charger la valeur sauvegardée
+        // Charger le compteur et le thème sauvegardés
         let compteur = localStorage.getItem('monCompteur') ? parseInt(localStorage.getItem('monCompteur')) : 0;
+        let themeActuel = localStorage.getItem('theme') ? localStorage.getItem('theme') : 'light';
+        
+        // Appliquer le thème au démarrage
+        document.documentElement.setAttribute('data-theme', themeActuel);
+        themeBtn.textContent = themeActuel === 'dark' ? '🌙' : '☀️';
 
-        // Fonction pour ajouter un élément à l'historique visuel
+        // 🔊 Générateur de sons synthétiques (pas besoin de fichier audio externe !)
+        function jouerSon(frequence, type) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = type || 'sine';
+            osc.frequency.value = frequence;
+            
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        }
+
+        // ✨ Animation de rebond sur le chiffre
+        function animerChiffre() {
+            nombre.classList.remove('pop');
+            void nombre.offsetWidth; // Astuce pour forcer le navigateur à relancer l'animation
+            nombre.classList.add('pop');
+            setTimeout(() => nombre.classList.remove('pop'), 100);
+        }
+
         function ajouterHistorique(texte) {
             const li = document.createElement('li');
             const maintenant = new Date();
@@ -127,57 +209,67 @@
             li.textContent = `[${heure}] ${texte}`;
             listeHistorique.insertBefore(li, listeHistorique.firstChild);
             
-            // Limiter à 4 éléments visibles dans l'historique pour garder le design propre
             if (listeHistorique.children.length > 4) {
                 listeHistorique.removeChild(listeHistorique.lastChild);
             }
         }
 
-        // Fonction globale de mise à jour de l'interface
         function rafraichirApplication(actionTexte) {
-            // 1. Mettre à jour le texte du compteur et stocker
             nombre.textContent = compteur;
             localStorage.setItem('monCompteur', compteur);
 
-            // 2. Gestion dynamique de la couleur de fond
-            if (compteur > 0) {
-                fiche.style.backgroundColor = "#eafaf1"; // Vert très clair
-            } else if (compteur < 0) {
-                fiche.style.backgroundColor = "#fdf2f2"; // Rouge très clair
+            // Changement subtil de fond selon la valeur (uniquement en mode clair)
+            if (document.documentElement.getAttribute('data-theme') !== 'dark') {
+                if (compteur > 0) fiche.style.backgroundColor = "#eafaf1";
+                else if (compteur < 0) fiche.style.backgroundColor = "#fdf2f2";
+                else fiche.style.backgroundColor = "#ffffff";
             } else {
-                fiche.style.backgroundColor = "#ffffff"; // Blanc
+                fiche.style.backgroundColor = "var(--card-bg)";
             }
 
-            // 3. Vérification de l'objectif
             if (compteur >= OBJECTIF) {
                 alerteMessage.textContent = `🏆 Objectif de ${OBJECTIF} atteint !`;
             } else {
                 alerteMessage.textContent = "";
             }
 
-            // 4. Ajouter à l'historique si une action a été passée
             if (actionTexte) {
                 ajouterHistorique(actionTexte);
             }
         }
 
-        // Actions au clic
+        // Événements boutons
         btnPlus.addEventListener('click', () => {
             compteur++;
+            jouerSon(600, 'triangle'); // Son aigu agréable
+            animerChiffre();
             rafraichirApplication("Ajout de +1");
         });
 
         btnMoins.addEventListener('click', () => {
             compteur--;
+            jouerSon(300, 'triangle'); // Son plus grave
+            animerChiffre();
             rafraichirApplication("Soustraction de -1");
         });
 
         btnReset.addEventListener('click', () => {
             compteur = 0;
+            jouerSon(150, 'sawtooth'); // Son spécial reset
+            animerChiffre();
             rafraichirApplication("Remise à zéro");
         });
 
-        // Premier démarrage de l'affichage
+        // Gestion du bouton Mode Sombre
+        themeBtn.addEventListener('click', () => {
+            let alternerTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', alternerTheme);
+            localStorage.setItem('theme', alternerTheme);
+            themeBtn.textContent = alternerTheme === 'dark' ? '🌙' : '☀️';
+            rafraichirApplication(null);
+        });
+
+        // Premier démarrage
         rafraichirApplication("Ouverture de l'application");
     </script>
 </body>
