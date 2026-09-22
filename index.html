@@ -41,12 +41,12 @@
             background: var(--card-bg);
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             text-align: center;
             width: 380px;
             transition: background-color 0.3s ease;
         }
-        
+
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -70,21 +70,27 @@
             font-size: 1.4rem;
             cursor: pointer;
         }
-        
-        h1 { color: var(--text-main); margin: 10px 0; font-size: 1.8rem; }
-        
-        .counter { 
-            font-size: 5rem; 
-            font-weight: bold; 
-            color: #4A00E0; 
-            margin: 10px 0; 
+
+        h1 {
+            color: var(--text-main);
+            margin: 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .counter {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #4A00E0;
+            margin: 10px 0;
             transition: transform 0.1s ease;
             display: inline-block;
             width: 100%;
         }
-        
-        .pop { transform: scale(1.15); }
-        
+
+        .pop {
+            transform: scale(1.15);
+        }
+
         .message {
             font-weight: bold;
             color: #28a745;
@@ -98,7 +104,7 @@
             justify-content: center;
             margin-bottom: 15px;
         }
-        
+
         button.action-btn {
             color: white;
             border: none;
@@ -109,13 +115,24 @@
             font-weight: bold;
             transition: transform 0.1s, opacity 0.2s;
         }
-        button.action-btn:active { transform: scale(0.95); }
-        button.action-btn:hover { opacity: 0.9; }
+
+        button.action-btn:active {
+            transform: scale(0.95);
+        }
+
+        button.action-btn:hover {
+            opacity: 0.9;
+        }
 
         .btn-add { background-color: #28a745; flex: 1; }
         .btn-sub { background-color: #dc3545; flex: 1; }
-        .btn-reset { background-color: #6c757d; width: 100%; padding: 10px; margin-bottom: 10px; }
-        
+        .btn-reset {
+            background-color: #6c757d;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
         .btn-export {
             background-color: #0284c7;
             width: 100%;
@@ -130,12 +147,14 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
+
         .sparkline-title {
             font-size: 0.8rem;
             color: var(--text-sub);
             text-align: left;
             margin-bottom: 5px;
         }
+
         .sparkline {
             display: flex;
             align-items: flex-end;
@@ -144,6 +163,7 @@
             height: 40px;
             overflow: hidden;
         }
+
         .bar {
             width: 12px;
             background-color: #4A00E0;
@@ -157,7 +177,13 @@
             padding-top: 15px;
             text-align: left;
         }
-        .history-section h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-sub); }
+
+        .history-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: var(--text-sub);
+        }
+
         .history-list {
             list-style: none;
             padding: 0;
@@ -167,6 +193,7 @@
             font-size: 0.85rem;
             color: var(--text-sub);
         }
+
         .history-list li {
             padding: 4px 0;
             border-bottom: 1px dashed var(--border-color);
@@ -188,7 +215,7 @@
         <h1>Mon Compteur Avancé</h1>
         <div class="counter" id="nombre">0</div>
         <div class="message" id="alerte-message"></div>
-        
+
         <div class="btn-group">
             <button class="action-btn btn-sub" id="bouton-moins">Soustraire -1</button>
             <button class="action-btn btn-add" id="bouton-plus">Ajouter +1</button>
@@ -208,6 +235,12 @@
     </div>
 
     <script>
+        // ====== CONSTANTES ======
+        const OBJECTIF = 10;
+        const MAX_GRAPH = 20;
+        const MAX_HISTO_AFFICHE = 4;
+
+        // ====== RÉFÉRENCES DOM ======
         const nombre = document.getElementById('nombre');
         const btnPlus = document.getElementById('bouton-plus');
         const btnMoins = document.getElementById('bouton-moins');
@@ -220,25 +253,35 @@
         const soundPack = document.getElementById('sound-pack');
         const graphique = document.getElementById('graphique');
 
-        const OBJECTIF = 10;
-        
-        let compteur = localStorage.getItem('monCompteur') ? parseInt(localStorage.getItem('monCompteur')) : 0;
-        let themeActuel = localStorage.getItem('theme') ? localStorage.getItem('theme') : 'light';
-        let historiqueData = localStorage.getItem('historiqueDonnees') ? JSON.parse(localStorage.getItem('historiqueDonnees')) : [];
-        let historiqueGraphique = localStorage.getItem('historiqueGraph') ? JSON.parse(localStorage.getItem('historiqueGraph')) : [];
+        // ====== ÉTAT (chargé depuis localStorage) ======
+        let compteur = parseInt(localStorage.getItem('monCompteur')) || 0;
+        let themeActuel = localStorage.getItem('theme') || 'light';
+        let historiqueData = JSON.parse(localStorage.getItem('historiqueDonnees') || '[]');
+        let historiqueGraphique = JSON.parse(localStorage.getItem('historiqueGraph') || '[]');
 
+        // ====== AUDIO (un seul contexte réutilisé) ======
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        // ====== INITIALISATION DU THÈME ======
         document.documentElement.setAttribute('data-theme', themeActuel);
         themeBtn.textContent = themeActuel === 'dark' ? '🌙' : '☀️';
 
+        // ====== FONCTIONS ======
         function jouerSon(typeAction) {
             const pack = soundPack.value;
             if (pack === 'mute') return;
 
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = getAudioCtx();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                
+
                 if (pack === 'retro') {
                     osc.type = 'square';
                     if (typeAction === 'plus') {
@@ -256,7 +299,7 @@
                     else if (typeAction === 'moins') osc.frequency.value = 392.00;
                     else osc.frequency.value = 261.63;
                 }
-                
+
                 gain.gain.setValueAtTime(0.05, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
                 osc.connect(gain);
@@ -270,12 +313,147 @@
 
         function animerChiffre() {
             nombre.classList.remove('pop');
-            void nombre.offsetWidth;
+            void nombre.offsetWidth; // force le reflow
             nombre.classList.add('pop');
             setTimeout(() => nombre.classList.remove('pop'), 100);
         }
 
         function dessinerGraphique() {
             graphique.innerHTML = '';
-            if (historiqueGraphique.length > 20) historiqueGraphique.shift();
-            
+            if (historiqueGraphique.length === 0) return;
+
+            const maxVal = Math.max(...historiqueGraphique.map(Math.abs), 1);
+
+            historiqueGraphique.forEach(val => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const hauteur = Math.max((Math.abs(val) / maxVal) * 35, 3);
+                bar.style.height = hauteur + 'px';
+
+                if (val < 0) bar.style.backgroundColor = '#dc3545';
+                else if (val > 0) bar.style.backgroundColor = '#28a745';
+
+                bar.title = 'Valeur : ' + val;
+                graphique.appendChild(bar);
+            });
+        }
+
+        function ajouterEvenement(texte) {
+            const maintenant = new Date();
+            const heure = maintenant.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            historiqueData.push({ heure, action: texte, total: compteur });
+            localStorage.setItem('historiqueDonnees', JSON.stringify(historiqueData));
+
+            const li = document.createElement('li');
+            li.textContent = '[' + heure + '] ' + texte;
+            listeHistorique.insertBefore(li, listeHistorique.firstChild);
+
+            if (listeHistorique.children.length > MAX_HISTO_AFFICHE) {
+                listeHistorique.removeChild(listeHistorique.lastChild);
+            }
+        }
+
+        function rafraichirApplication(actionTexte) {
+            nombre.textContent = compteur;
+            localStorage.setItem('monCompteur', compteur);
+
+            // Couleur de fond conditionnelle (uniquement en thème clair)
+            if (document.documentElement.getAttribute('data-theme') !== 'dark') {
+                if (compteur > 0) fiche.style.backgroundColor = "#eafaf1";
+                else if (compteur < 0) fiche.style.backgroundColor = "#fdf2f2";
+                else fiche.style.backgroundColor = "#ffffff";
+            } else {
+                fiche.style.backgroundColor = "";
+            }
+
+            // Message d'objectif
+            if (compteur >= OBJECTIF) {
+                alerteMessage.textContent = '🏆 Objectif de ' + OBJECTIF + ' atteint !';
+            } else {
+                alerteMessage.textContent = '';
+            }
+
+            // Historique + graphique (seulement quand une action utilisateur a lieu)
+            if (actionTexte) {
+                ajouterEvenement(actionTexte);
+                historiqueGraphique.push(compteur);
+                if (historiqueGraphique.length > MAX_GRAPH) historiqueGraphique.shift();
+                localStorage.setItem('historiqueGraph', JSON.stringify(historiqueGraphique));
+            }
+
+            dessinerGraphique();
+        }
+
+        // ====== ÉVÉNEMENTS ======
+        btnPlus.addEventListener('click', () => {
+            compteur++;
+            jouerSon('plus');
+            animerChiffre();
+            rafraichirApplication('Ajout de +1');
+        });
+
+        btnMoins.addEventListener('click', () => {
+            compteur--;
+            jouerSon('moins');
+            animerChiffre();
+            rafraichirApplication('Soustraction de -1');
+        });
+
+        btnReset.addEventListener('click', () => {
+            compteur = 0;
+            jouerSon('reset');
+            animerChiffre();
+            rafraichirApplication('Remise à zéro');
+        });
+
+        btnExport.addEventListener('click', () => {
+            if (historiqueData.length === 0) {
+                alert("L'historique est vide pour le moment.");
+                return;
+            }
+
+            // BOM UTF-8 pour que les accents s'affichent correctement dans Excel
+            let csv = "\uFEFFHeure,Action,Valeur Compteur\n";
+            historiqueData.forEach(row => {
+                csv += row.heure + ',' + row.action + ',' + row.total + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'historique_compteur.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        themeBtn.addEventListener('click', () => {
+            const nouveau = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', nouveau);
+            localStorage.setItem('theme', nouveau);
+            themeBtn.textContent = nouveau === 'dark' ? '🌙' : '☀️';
+            rafraichirApplication(null);
+        });
+
+        // ====== CHARGEMENT DE L'HISTORIQUE AU DÉMARRAGE ======
+        if (historiqueData.length > 0) {
+            const derniersAffiches = historiqueData.slice(-MAX_HISTO_AFFICHE).reverse();
+            derniersAffiches.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = '[' + item.heure + '] ' + item.action;
+                listeHistorique.appendChild(li);
+            });
+        }
+
+        // ====== PREMIER RENDU ======
+        rafraichirApplication(null);
+    </script>
+</body>
+</html>
